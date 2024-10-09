@@ -15,7 +15,7 @@ local panels = {
 			["persistpvp"] = 						{0, "Force PVP on respawn if the player died with PVP"},
 			["builddelay"] = 						{1, "Buildmode Delay"}
 		}
-	}, 
+	},
 	{ --panel_whilein
 		panelItems = {
 			["restrictweapons"] = 					{0, "Restrict weapons with 'Builder Weapons'"},
@@ -51,12 +51,12 @@ local panels = {
 	},
 	{ -- panel_advanced
 		{
-		
+
 		}
 	},
-	{ -- panel_help 
+	{ -- panel_help
 		{
-		
+
 		}
 	}
 }
@@ -64,16 +64,16 @@ local panels = {
 for k, e in pairs(panels) do
 	local y = 5
 	e["panel"] = xlib.makepanel{x=160, y=5, w=425, h=322, parent=b}
-	local panel = e["panel"]	
+	local panel = e["panel"]
 	local panelItems = e["panelItems"]
- 
+
 	if panelItems then
 		for k, e in pairs(panelItems) do
 			-- checkbox
 			if e[1] == 0 then
 				e["check"] = xlib.makecheckbox{ x=5, y=y, label=e[2], parent=panel, repconvar="rep_kylebuildmode_" .. k}
 			end
-			
+
 			-- number
 			if e[1] == 1 then
 				e["number"] = xlib.makenumberwang {x=5, y=y, w=35, parent=panel}
@@ -292,7 +292,7 @@ net.Receive( "kylebuildmode_senddata", function()
 	color_builderhalo:SetColor( Color(z[1],z[2],z[3]))
 	z = string.Split( _Kyle_Buildmode["highlightpvperscolor"],"," )
 	color_pvphalo:SetColor( Color(z[1],z[2],z[3]))
-	
+
 	panels[1]["panelItems"]["builddelay"]["number"]:SetValue(_Kyle_Buildmode["builddelay"])
 	panels[3]["panelItems"]["pvpdelay"]["number"]:SetValue(_Kyle_Buildmode["pvpdelay"])
 	panels[4]["panelItems"]["spawnprotection"]["number"]:SetValue(_Kyle_Buildmode["spawnprotection"])
