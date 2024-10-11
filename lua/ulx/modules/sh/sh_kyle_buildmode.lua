@@ -286,7 +286,7 @@ if SERVER then
 			z.buildmode = true
 
 			--noclip their vehicle so they cant run anyone anyone over while in buildmode
-			if z:InVehicle() then
+			if _Kyle_Buildmode["antipropkill"] == "1" and z:InVehicle() then
 				if _kyle_builder_allow_vehicle(z, z:GetVehicle()) then
 					_kyle_Prop_Noclip(z:GetVehicle())
 				else
@@ -329,11 +329,8 @@ if SERVER then
 		z:SendLua("GAMEMODE:AddNotify(\"Buildmode disabled.\", NOTIFY_GENERIC, 5)")
 
 		if z:Alive() then
-			--save their position incase they dont need to return to spawn on exit
-			local pos = z:GetPos()
-
 			--if they are in a vehicle try to un noclip their vehicle and kick them out of it if they need to return to spawn
-			if z:InVehicle() then
+			if _Kyle_Buildmode["antipropkill"] == "1" and z:InVehicle() then
 				if IsValid(z:GetVehicle()) and z:GetVehicle().buildnoclipped then
 					_kyle_Prop_TryUnNoclip(z:GetVehicle())
 				end
@@ -343,15 +340,21 @@ if SERVER then
 				end
 			end
 
-			ULib.spawn(z, not z.buildmode_onspawn)
+			if _Kyle_Buildmode["restrictweapons"] == "1" then
+				--save their position incase they dont need to return to spawn on exit
+				local pos = z:GetPos()
 
-			if _Kyle_Buildmode["restrictweapons"] == "1" and z.buildmode_onspawn then
-				z:ConCommand("kylebuildmode defaultloadout")
-			end
+				local buildOnSpawn = z.buildmode_onspawn
+				ULib.spawn(z, not buildOnSpawn)
 
-			--ULIB.spawn moves the player to spawn, this will return the player to where they where while in buildmode
-			if _Kyle_Buildmode["returntospawn"] == "0" then
-				z:SetPos(pos)
+				if buildOnSpawn then
+					z:ConCommand("kylebuildmode defaultloadout")
+				end
+
+				--ULIB.spawn moves the player to spawn, this will return the player to where they where while in buildmode
+				if _Kyle_Buildmode["returntospawn"] == "0" then
+					z:SetPos(pos)
+				end
 			end
 
 			--disable noclip if they had it in build
@@ -529,6 +532,10 @@ if SERVER then
 		end
 	end, HOOK_HIGH)
 
+	hook.Add("GetFallDamage", "kyleBuildmodeFallDamage", function(ply)
+		if ply.buildmode then return 0 end
+	end)
+
 	hook.Add("PlayerGiveSWEP", "kylebuildmoderestrictswep", function(y, z)
 		if not _kyle_builder_spawn_weapon(y, z) then
 			--some say that sendlua is lazy and wrong but idc
@@ -582,7 +589,7 @@ if SERVER then
 			return false
 		end
 	end)
-
+	--[[
 	hook.Add("OnEntityCreated", "kylebuildmodeentitycreated", function(z)
 		if z:GetClass() == "prop_combine_ball" then
 			z:SetCustomCollisionCheck( true )
@@ -596,7 +603,7 @@ if SERVER then
 			end
 		end
 	end)
-
+	]]
 	local function canDamageNPC(target)
 		return _Kyle_Buildmode["allownpcdamage"] == "1" and (target:IsNPC() or target:IsNextBot())
 	end
@@ -615,6 +622,9 @@ if SERVER then
 			local owner = attacker:GetOwner()
 			if IsValid(owner) and owner.buildmode then return true end
 
+			local cppiOwner = attacker:CPPIGetOwner()
+			if IsValid(cppiOwner) and cppiOwner.buildmode then return true end
+
 			if simfphys and simfphys.IsCar and simfphys.IsCar(attacker) and attacker:GetDriver().buildmode or attacker.buildnoclipped then return true end
 
 			if attacker.buildnoclipped then return true end
@@ -626,7 +636,13 @@ if SERVER then
 		if validinflictor then
 			local owner = inflictor:GetOwner()
 			if IsValid(owner) and owner.buildmode then return true end
+
+			local cppiOwner = inflictor:CPPIGetOwner()
+			if IsValid(cppiOwner) and cppiOwner.buildmode then return true end
 		end
+
+		-- Prevent builders from causing world damage by crushing things with physics objects
+		if not validattacker and not validinflictor and dmg:IsDamageType(DMG_CRUSH) then return true end
 
 		if target:IsPlayer() then
 			local adminbypass = target:IsAdmin() and _Kyle_Buildmode["adminsbypassrestrictions"] == "1"
@@ -726,12 +742,12 @@ hook.Add("PreDrawHalos", "KyleBuildmodehalos", function()
 	end
 
 	-- add setting later for render mode
-	if _Kyle_Buildmode["highlightbuilders"] == "1" then
+	if _Kyle_Buildmode["highlightbuilders"] == "1" and next(w) then
 		z = string.Split(_Kyle_Buildmode["highlightbuilderscolor"], ",")
 		halo.Add(w, Color(z[1], z[2], z[3]), 4, 4, 1, true)
 	end
 
-	if _Kyle_Buildmode["highlightpvpers"] == "1" then
+	if _Kyle_Buildmode["highlightpvpers"] == "1" and next(x) then
 		z = string.Split(_Kyle_Buildmode["highlightpvperscolor"], ",")
 		halo.Add(x, Color(z[1], z[2], z[3]), 4, 4, 1, true)
 	end
@@ -746,7 +762,7 @@ hook.Add("HUDPaint", "KyleBuilderhudpaint", function()
 
 		if x == 0 or y == 0 then
 			x = ScrW() / 2
-			y = ScrH() / 1.74
+			y = (ScrH() / 2) + 107 -- ScrH() / 1.74
 		end
 
 		-- local col = string.Split(_Kyle_Buildmode["highlightpvperscolor"], ",")
