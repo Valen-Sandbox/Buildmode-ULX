@@ -477,14 +477,16 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerNoClip", "KylebuildmodeNoclip", function(y, z)
-		if _Kyle_Buildmode["allownoclip"] == "1" and ULib.ucl.query(y, "kylebuildmodenoclip", true) then
+		if _Kyle_Buildmode["allownoclip"] ~= "1" then return end
+
+		if ULib.ucl.query(y, "kylebuildmodenoclip", true) then
 			--allow players to use default sandbox noclip
 			y.buildmode_noclipped = z
-			return z == false or z == y.buildmode
-		elseif _Kyle_Buildmode["allownoclip"] == "1" then
-			y:SendLua("GAMEMODE:AddNotify(\"You do not have permission to use noclip in Buildmode\", NOTIFY_ERROR, 5)")
+			--return z == false or z == y.buildmode
+		else
+			y:SendLua("GAMEMODE:AddNotify(\"You do not have permission to use noclip in Buildmode!\", NOTIFY_ERROR, 5)")
 		end
-	end, HOOK_HIGH)
+	end)
 
 	hook.Add("PlayerSpawn", "kyleBuildmodePlayerSpawn",  function(z)
 		--z.buildmode_died makes sure that the player is spawning after an actual death and not the ulib respawn function
