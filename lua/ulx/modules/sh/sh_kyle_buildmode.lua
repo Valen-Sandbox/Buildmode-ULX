@@ -777,3 +777,20 @@ hook.Add("HUDPaint", "KyleBuilderhudpaint", function()
 		draw.TextShadow({text = mode .. "er", font = "TargetID", pos = {x, y}, xalign = TEXT_ALIGN_CENTER, yalign = TEXT_ALIGN_CENTER, color = team.GetColor(z:Team())}, 1)
 	end
 end)
+
+list.Set("DesktopWindows", "ULX Buildmode Toggler", {
+	title	= "Toggle Build",
+	icon	= "materials/icon16/arrow_refresh.png",
+	width	= 480,
+	height	= 640,
+	init	= function(_, window)
+		local plyInBuild = LocalPlayer():GetNWBool("_Kyle_Buildmode")
+		local command = plyInBuild and "pvp" or "build"
+
+		RunConsoleCommand("ulx", command)
+
+		if IsValid(window) then
+			window:Close()
+		end
+	end
+})
